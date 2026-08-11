@@ -4,19 +4,75 @@ import {
   useGLTF,
   Html
 } from '@react-three/drei'
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
 
+const PROJECTS = [
+  {
+    id: 1,
+    name: 'OnlyStudents',
+    subtitle: 'Campus Super App',
+    image: '/images/onlystudents-project.png',
+    description:
+      'A campus-focused platform built to connect university students, opportunities, services, and campus life.',
+    technologies: ['React Native', 'Expo', 'Supabase'],
+    liveUrl: 'https://github.com/SagarChhetrii',
+    githubUrl: 'https://github.com/SagarChhetrii'
+  },
+  {
+    id: 2,
+    name: 'LEARNING TRACKER',
+    subtitle: 'Personal Learning Dashboard',
+    image: '/images/learning-tracker-project.png',
+    description:
+      'A personal learning platform designed to organize courses, track progress, manage learning goals, and keep the entire learning journey in one place.',
+    technologies: [
+      'React',
+      'Vite',
+      'Tailwind CSS',
+    ],
+    liveUrl:
+      'https://learn-trackhub.vercel.app/',
+    githubUrl:
+      'https://github.com/SagarChhetrii',
+  },
+  {
+    id: 3,
+    name: 'APPROVALVAULT',
+    subtitle: 'Secure Client Approval Platform',
+    image: '/images/approval-vault-project.png',
+    description:
+      'A secure client approval platform for uploading, reviewing, approving, and verifying files with version control, audit trails, and approval certificates.',
+    technologies: [
+      'React',
+      'Vite',
+      'Node.js',
+      'Express',
+      'MongoDB',
+      'JWT',
+    ],
+    liveUrl:
+      'https://github.com/SagarChhetrii/approval-vault',
+    githubUrl:
+      'https://github.com/SagarChhetrii/approval-vault',
+  },
+]
 
-// ======================================================
-// LIBRARY ROOM
-// ======================================================
+function LibraryRoom({
+  onReady,
+  onProjectHover,
+  onProjectSelect
+}) {
 
-function LibraryRoom({ onReady }) {
-
-  const [hoveredProject, setHoveredProject] =
-    useState(null)
+  const [
+    hoveredProject,
+    setHoveredProject
+  ] = useState(null)
 
   const { scene } =
     useGLTF('/models/library.glb')
@@ -25,22 +81,28 @@ function LibraryRoom({ onReady }) {
 
   const controlsRef = useRef()
 
-
-  // ==================================================
-  // LIBRARY SETUP
-  // ==================================================
+  const isMobile =
+    typeof window !== 'undefined' &&
+    window.matchMedia(
+      '(max-width: 700px)'
+    ).matches
 
   useEffect(() => {
 
-    scene.updateWorldMatrix(true, true)
+    scene.position.set(
+      0,
+      0,
+      0
+    )
 
-
-    // ==========================================
-    // FIND LIBRARY SIZE
-    // ==========================================
+    scene.updateWorldMatrix(
+      true,
+      true
+    )
 
     const box =
-      new THREE.Box3().setFromObject(scene)
+      new THREE.Box3()
+        .setFromObject(scene)
 
     const center =
       new THREE.Vector3()
@@ -49,8 +111,8 @@ function LibraryRoom({ onReady }) {
       new THREE.Vector3()
 
     box.getCenter(center)
-    box.getSize(size)
 
+    box.getSize(size)
 
     console.log(
       '📚 LIBRARY CENTER:',
@@ -62,29 +124,25 @@ function LibraryRoom({ onReady }) {
       size
     )
 
+    scene.position.x -=
+      center.x
 
-    // ==========================================
-    // CENTER LIBRARY
-    // ==========================================
+    scene.position.y -=
+      center.y
 
-    scene.position.x -= center.x
-    scene.position.y -= center.y
-    scene.position.z -= center.z
+    scene.position.z -=
+      center.z
 
-
-    // ==========================================
-    // LIBRARY CAMERA
-    // ==========================================
-
-    const startDistance = 700
-
+    const startDistance =
+      isMobile
+        ? 685
+        : 700
 
     camera.position.set(
       0,
       80,
       startDistance
     )
-
 
     const interiorTarget =
       new THREE.Vector3(
@@ -93,11 +151,9 @@ function LibraryRoom({ onReady }) {
         0
       )
 
-
     camera.lookAt(
       interiorTarget
     )
-
 
     camera.near = 0.5
 
@@ -110,38 +166,30 @@ function LibraryRoom({ onReady }) {
 
     camera.updateProjectionMatrix()
 
+    scene.traverse(
+      (object) => {
 
-    // ==========================================
-    // MATERIALS
-    // ==========================================
+        if (!object.isMesh)
+          return
 
-    scene.traverse((object) => {
+        if (object.material) {
 
-    if (!object.isMesh)
-        return
+          object.material.side =
+            THREE.DoubleSide
 
-    if (object.material) {
+        }
 
-        object.material.side =
-        THREE.DoubleSide
+        object.raycast =
+          () => {}
 
-    }
-
-    object.raycast = () => {}
-
-    })
-
-
-    // ==========================================
-    // LIBRARY CONTROLS
-    // ==========================================
+      }
+    )
 
     if (controlsRef.current) {
 
       controlsRef.current.target.copy(
         interiorTarget
       )
-
 
       controlsRef.current.enableRotate =
         true
@@ -152,21 +200,11 @@ function LibraryRoom({ onReady }) {
       controlsRef.current.enableZoom =
         true
 
-
-      // ========================================
-      // FIXED VERTICAL ANGLE
-      // ========================================
-
       controlsRef.current.minPolarAngle =
         1.53
 
       controlsRef.current.maxPolarAngle =
         1.53
-
-
-      // ========================================
-      // LEFT / RIGHT ROTATION
-      // ========================================
 
       controlsRef.current.minAzimuthAngle =
         -0.65
@@ -174,29 +212,20 @@ function LibraryRoom({ onReady }) {
       controlsRef.current.maxAzimuthAngle =
         0.65
 
-
-      // ========================================
-      // ZOOM
-      // ========================================
-
       controlsRef.current.maxDistance =
         startDistance
 
       controlsRef.current.minDistance =
-        280
+        isMobile
+          ? 240
+          : 280
 
       controlsRef.current.zoomSpeed =
         0.35
 
-
       controlsRef.current.update()
 
     }
-
-
-    // ==========================================
-    // ROOM READY
-    // ==========================================
 
     const timer =
       setTimeout(() => {
@@ -205,16 +234,16 @@ function LibraryRoom({ onReady }) {
 
       }, 300)
 
-
     return () =>
       clearTimeout(timer)
 
-  }, [scene, camera, onReady])
+  }, [
+    scene,
+    camera,
+    onReady,
+    isMobile
+  ])
 
-
-  // ==================================================
-  // PROJECT HOVER HELPERS
-  // ==================================================
 
   const handleProjectHover =
     (projectNumber) => {
@@ -229,143 +258,273 @@ function LibraryRoom({ onReady }) {
   const handleProjectOut =
     () => {
 
-      setHoveredProject(null)
-
-    }
-
-
-  // ==================================================
-  // PROJECT LABEL
-  // ==================================================
-
-  const ProjectLabel =
-    ({ number, name, position }) => {
-
-      if (
-        hoveredProject !== number
-      ) {
-        return null
-      }
-
-
-      return (
-
-        <Html
-          position={position}
-          center
-          distanceFactor={6}
-          style={{
-            pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-            zIndex: 100
-          }}
-        >
-
-          <div
-            style={{
-              color: '#FFFFFF',
-
-              fontSize: '16px',
-
-              letterSpacing: '4px',
-
-              fontFamily:
-                'Arial, Helvetica, sans-serif',
-
-              fontWeight: '500',
-
-              textShadow:
-                '0 0 8px #A855F7, 0 0 20px #A855F7',
-
-              userSelect: 'none',
-
-              pointerEvents: 'none',
-
-              background:
-                'rgba(0, 0, 0, 0.45)',
-
-              padding:
-                '8px 14px',
-
-              border:
-                '1px solid rgba(168, 85, 247, 0.5)',
-
-              borderRadius:
-                '4px',
-
-              backdropFilter:
-                'blur(4px)'
-            }}
-          >
-            {name}
-          </div>
-
-        </Html>
-
+      setHoveredProject(
+        null
       )
 
     }
 
 
+  const ProjectLabel = ({
+    number,
+    name,
+    position
+  }) => {
+
+    if (
+      hoveredProject !== number
+    ) {
+      return null
+    }
+
+    const isTouchDevice =
+      typeof window !== 'undefined' &&
+      window.matchMedia(
+        '(pointer: coarse)'
+      ).matches
+
+    return (
+
+      <Html
+        fullscreen
+        zIndexRange={[
+          10000,
+          10000
+        ]}
+        style={{
+          pointerEvents:
+            'none',
+        }}
+      >
+
+        <div
+          style={{
+            position: 'fixed',
+
+            top:
+              isTouchDevice
+                ? '20%'
+                : '38%',
+
+            left: '50%',
+
+            transform:
+              'translate(-50%, -50%)',
+
+            display: 'flex',
+
+            flexDirection:
+              'column',
+
+            alignItems:
+              'center',
+
+            color:
+              '#FFFFFF',
+
+            fontFamily:
+              'Arial, Helvetica, sans-serif',
+
+            userSelect:
+              'none',
+
+            pointerEvents:
+              'none',
+
+            maxWidth:
+              'calc(100vw - 32px)',
+
+            textAlign:
+              'center',
+          }}
+        >
+
+          <div
+            style={{
+              display: 'flex',
+
+              alignItems:
+                'center',
+
+              justifyContent:
+                'center',
+
+              gap:
+                isTouchDevice
+                  ? '8px'
+                  : '10px',
+
+              padding:
+                isTouchDevice
+                  ? '9px 13px'
+                  : '8px 14px',
+
+              background:
+                'rgba(0, 0, 0, 0.78)',
+
+              border:
+                '1px solid rgba(168, 85, 247, 0.7)',
+
+              borderRadius:
+                '5px',
+
+              boxShadow:
+                '0 0 15px rgba(168, 85, 247, 0.35)',
+
+              backdropFilter:
+                'blur(5px)',
+            }}
+          >
+
+            <span
+              style={{
+                padding:
+                  isTouchDevice
+                    ? '4px 8px'
+                    : '3px 8px',
+
+                border:
+                  '1px solid rgba(255,255,255,0.7)',
+
+                borderRadius:
+                  '3px',
+
+                fontSize:
+                  isTouchDevice
+                    ? '11px'
+                    : '13px',
+
+                fontWeight:
+                  '700',
+
+                letterSpacing:
+                  '1px',
+
+                background:
+                  'rgba(255,255,255,0.08)',
+              }}
+            >
+
+              {isTouchDevice
+                ? 'TAP'
+                : 'E'}
+
+            </span>
+
+
+            <span
+              style={{
+                fontSize:
+                  isTouchDevice
+                    ? '11px'
+                    : '13px',
+
+                letterSpacing:
+                  isTouchDevice
+                    ? '2px'
+                    : '3px',
+
+                fontWeight:
+                  '500',
+              }}
+            >
+
+              {isTouchDevice
+                ? 'TO OPEN'
+                : 'INSPECT'}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </Html>
+
+    )
+
+  }
+
+
   useEffect(() => {
+
     document.body.style.cursor =
       hoveredProject
         ? 'pointer'
         : 'default'
 
     return () => {
+
       document.body.style.cursor =
         'default'
+
     }
-  }, [hoveredProject])
+
+  }, [
+    hoveredProject
+  ])
 
 
   const projectLamps = [
+
     {
       number: 1,
       name: 'ONLYSTUDENTS',
-      position: [-60, 5, -250],
-      labelPosition: [-60, 70, -250],
-      logName: 'PROJECT 1'
+      position: [
+        -60,
+        5,
+        -250
+      ],
+      logName:
+        'PROJECT 1'
     },
+
     {
       number: 2,
       name: 'PROJECT 2',
-      position: [-200, 25, -250],
-      labelPosition: [-200, 90, -250],
-      logName: 'PROJECT 2'
+      position: [
+        -200,
+        25,
+        -250
+      ],
+      labelPosition: [
+        -200,
+        90,
+        -250
+      ],
+      logName:
+        'PROJECT 2'
     },
+
     {
       number: 3,
       name: 'PROJECT 3',
-      position: [110, -45, -250],
-      labelPosition: [110, 40, -250],
-      logName: 'PROJECT 3'
+      position: [
+        110,
+        -45,
+        -250
+      ],
+      labelPosition: [
+        110,
+        40,
+        -250
+      ],
+      logName:
+        'PROJECT 3'
     }
+
   ]
 
-
-  // ==================================================
-  // RETURN LIBRARY
-  // ==================================================
 
   return (
 
     <>
-
-      {/* ==========================================
-          LIBRARY MODEL
-      ========================================== */}
 
       <primitive
         object={scene}
         scale={1}
       />
 
-
-      {/* ==========================================
-          DARK CEILING
-      ========================================== */}
 
       <mesh
         position={[
@@ -390,70 +549,144 @@ function LibraryRoom({ onReady }) {
 
         <meshBasicMaterial
           color="#050509"
-          side={THREE.DoubleSide}
-          depthWrite={false}
+          side={
+            THREE.DoubleSide
+          }
+          depthWrite={
+            false
+          }
         />
 
       </mesh>
 
-        {/* ==========================================
-            PROJECT LAMP HOTSPOTS
-        ========================================== */}
 
+      {projectLamps.map(
+        (projectLamp) => (
 
-        {projectLamps.map((projectLamp) => (
-          <group key={projectLamp.number}>
-          <mesh
-            position={projectLamp.position}
-            scale={hoveredProject === projectLamp.number ? 1.1 : 1}
-            onPointerOver={(event) => {
-            event.stopPropagation()
-
-            handleProjectHover(
+          <group
+            key={
               projectLamp.number
-            )
-
-            console.log(
-              `🔥 ${projectLamp.logName} HOVER`
-            )
-            }}
-            onPointerOut={(event) => {
-            event.stopPropagation()
-
-            handleProjectOut()
-            }}
-            onDoubleClick={(event) => {
-            event.stopPropagation()
-
-            console.log(
-              `🔥 ${projectLamp.logName} DOUBLE CLICK`
-            )
-            }}
+            }
           >
-            <sphereGeometry
-            args={[45, 32, 32]}
+
+            <mesh
+              position={
+                projectLamp.position
+              }
+
+              scale={
+                hoveredProject ===
+                projectLamp.number
+                  ? 1.1
+                  : 1
+              }
+
+              onPointerOver={
+                (event) => {
+
+                  event.stopPropagation()
+
+                  console.log(
+                    '🔥🔥 HOVER DETECTED:',
+                    projectLamp.number
+                  )
+
+                  setHoveredProject(
+                    projectLamp.number
+                  )
+
+                  onProjectHover(
+                    projectLamp.number
+                  )
+
+                }
+              }
+
+              onPointerOut={
+                (event) => {
+
+                  event.stopPropagation()
+
+                  handleProjectOut()
+
+                  onProjectHover(
+                    null
+                  )
+
+                }
+              }
+
+              onClick={
+                (event) => {
+
+                  event.stopPropagation()
+
+                  if (
+                    event.pointerType ===
+                    'touch'
+                  ) {
+
+                    onProjectSelect(
+                      projectLamp.number
+                    )
+
+                  }
+
+                }
+              }
+
+              onDoubleClick={
+                (event) => {
+
+                  event.stopPropagation()
+
+                  console.log(
+                    `🔥 ${projectLamp.logName} DOUBLE CLICK`
+                  )
+
+                  onProjectSelect(
+                    projectLamp.number
+                  )
+
+                }
+              }
+            >
+
+              <sphereGeometry
+                args={[
+                  25,
+                  25,
+                  25
+                ]}
+              />
+
+              <meshBasicMaterial
+                color="#FF00FF"
+                transparent
+                opacity={0.08}
+                depthWrite={false}
+              />
+
+            </mesh>
+
+
+            <ProjectLabel
+              number={
+                projectLamp.number
+              }
+              name={
+                projectLamp.name
+              }
+              position={
+                projectLamp.position
+              }
             />
 
-            <meshBasicMaterial
-            color="#FF00FF"
-            transparent
-            opacity={0.5}
-            depthWrite={false}
-            />
-          </mesh>
-
-          <ProjectLabel
-            number={projectLamp.number}
-            name={projectLamp.name}
-            position={projectLamp.labelPosition}
-          />
           </group>
-        ))}
 
+        )
+      )}
 
-      {/* ==========================================
-          LIBRARY CONTROLS
-      ========================================== */}
 
       <OrbitControls
 
@@ -479,32 +712,33 @@ function LibraryRoom({ onReady }) {
           0
         ]}
 
+        minPolarAngle={
+          1.53
+        }
 
-        // ========================================
-        // FIXED VERTICAL ANGLE
-        // ========================================
+        maxPolarAngle={
+          1.53
+        }
 
-        minPolarAngle={1.53}
+        minAzimuthAngle={
+          -0.65
+        }
 
-        maxPolarAngle={1.53}
+        maxAzimuthAngle={
+          0.65
+        }
 
+        maxDistance={
+          isMobile
+            ? 560
+            : 700
+        }
 
-        // ========================================
-        // LEFT / RIGHT ONLY
-        // ========================================
-
-        minAzimuthAngle={-0.65}
-
-        maxAzimuthAngle={0.65}
-
-
-        // ========================================
-        // ZOOM
-        // ========================================
-
-        maxDistance={700}
-
-        minDistance={280}
+        minDistance={
+          isMobile
+            ? 240
+            : 280
+        }
 
       />
 
@@ -514,10 +748,167 @@ function LibraryRoom({ onReady }) {
 
 }
 
+function RoomDoor({
+  name,
+  position,
+  rotation = [0, 0, 0],
+  onEnter,
+  disabled = false,
+}) {
 
-// ======================================================
-// HAUNTED HOUSE
-// ======================================================
+  const [hovered, setHovered] =
+    useState(false)
+
+  return (
+    <group
+      position={position}
+      rotation={rotation}
+    >
+
+      {/* Invisible / subtle interaction area */}
+      <mesh
+
+        onPointerOver={(event) => {
+
+          event.stopPropagation()
+
+          setHovered(true)
+
+          document.body.style.cursor =
+            disabled
+              ? 'default'
+              : 'pointer'
+
+        }}
+
+        onPointerOut={(event) => {
+
+          event.stopPropagation()
+
+          setHovered(false)
+
+          document.body.style.cursor =
+            'default'
+
+        }}
+
+        onPointerUp={(event) => {
+
+          if (
+            event.pointerType !== 'touch'
+          ) {
+            return
+          }
+
+          event.stopPropagation()
+
+          if (disabled) {
+            return
+          }
+
+          onEnter()
+
+        }}
+
+        onDoubleClick={(event) => {
+
+          event.stopPropagation()
+
+          if (disabled) {
+            return
+          }
+
+          onEnter()
+
+        }}
+
+      >
+
+        <boxGeometry
+          args={[
+            2.8,
+            4,
+            0.25
+          ]}
+        />
+
+        <meshBasicMaterial
+          color="#A855F7"
+          transparent
+          opacity={
+            hovered
+              ? 0.16
+              : 0
+          }
+          depthWrite={false}
+        />
+
+      </mesh>
+
+
+      {/* Always-visible room label */}
+
+      <Html
+        center
+        position={[
+          0,
+          2.4,
+          0
+        ]}
+        distanceFactor={8}
+      >
+
+        <div
+          style={{
+
+            color:
+              hovered
+                ? '#FFFFFF'
+                : 'rgba(255,255,255,0.72)',
+
+            fontFamily:
+              "'Shippori Mincho', serif",
+
+            fontSize:
+              '18px',
+
+            fontWeight:
+              '600',
+
+            letterSpacing:
+              '5px',
+
+            whiteSpace:
+              'nowrap',
+
+            textShadow:
+              hovered
+                ? '0 0 8px #A855F7, 0 0 20px #A855F7'
+                : '0 0 6px rgba(168,85,247,0.35)',
+
+            pointerEvents:
+              'none',
+
+            userSelect:
+              'none',
+ 
+            transition:
+              'all 0.2s ease',
+
+            opacity:1
+
+          }}
+        >
+
+          {name}
+
+        </div>
+
+      </Html>
+
+    </group>
+  )
+}
 
 function HauntedHouse({
   onEnter
@@ -530,23 +921,25 @@ function HauntedHouse({
       '/models/haunted-house.glb'
     )
 
-
   const {
     camera
   } =
     useThree()
 
-
   const controlsRef =
     useRef()
 
+  const isMobile =
+    typeof window !== 'undefined' &&
+    window.matchMedia(
+      '(max-width: 700px)'
+    ).matches
 
   const [
     doorHovered,
     setDoorHovered
   ] =
     useState(false)
-
 
   const [
     entering,
@@ -555,39 +948,55 @@ function HauntedHouse({
     useState(false)
 
 
-  // ==================================================
-  // HOUSE SETUP
-  // ==================================================
-
   useEffect(() => {
+
+    scene.visible =
+      true
+
+    scene.position.set(
+      0,
+      0,
+      0
+    )
+
+    scene.rotation.set(
+      0,
+      0,
+      0
+    )
 
     scene.updateWorldMatrix(
       true,
       true
     )
 
-
     const box =
       new THREE.Box3()
         .setFromObject(scene)
 
-
     const center =
       new THREE.Vector3()
 
-
     const size =
       new THREE.Vector3()
-
 
     box.getCenter(center)
 
     box.getSize(size)
 
+    console.log(
+      '🏚️ HOUSE SIZE:',
+      size.x,
+      size.y,
+      size.z
+    )
 
-    // ==========================================
-    // CENTER HOUSE
-    // ==========================================
+    console.log(
+      '🏚️ HOUSE POSITION:',
+      scene.position.x,
+      scene.position.y,
+      scene.position.z
+    )
 
     scene.position.x -=
       center.x
@@ -598,18 +1007,12 @@ function HauntedHouse({
     scene.position.z -=
       center.z
 
-
-    // ==========================================
-    // CAMERA
-    // ==========================================
-
     const maxDimension =
       Math.max(
         size.x,
         size.y,
         size.z
       )
-
 
     const distance =
       (maxDimension / 2) /
@@ -622,14 +1025,20 @@ function HauntedHouse({
 
     camera.position.set(
 
-      distance * 0.85,
+      distance *
+        (
+          isMobile
+            ? 3
+            : 10
+        ),
 
-      distance * 0.45,
+      distance *
+        0.45,
 
-      distance * 0.85
+      distance *
+        0.85
 
     )
-
 
     camera.lookAt(
       0,
@@ -638,26 +1047,45 @@ function HauntedHouse({
     )
 
 
-    // ==========================================
-    // CONTROLS
-    // ==========================================
+    if (
+      controlsRef.current
+    ) {
 
-    if (controlsRef.current) {
+      controlsRef.current.enabled =
+        true
+
+      controlsRef.current.enableRotate =
+        true
+
+      controlsRef.current.enablePan =
+        false
+
+      controlsRef.current.enableZoom =
+        true
+
+      controlsRef.current.minPolarAngle =
+        0
+
+      controlsRef.current.maxPolarAngle =
+        Math.PI
+
+      controlsRef.current.minAzimuthAngle =
+        -Infinity
+
+      controlsRef.current.maxAzimuthAngle =
+        Infinity
+
+      controlsRef.current.maxDistance =
+        distance
+
+      controlsRef.current.minDistance =
+        distance * 0.12
 
       controlsRef.current.target.set(
         0,
         0,
         0
       )
-
-
-      controlsRef.current.maxDistance =
-        distance
-
-
-      controlsRef.current.minDistance =
-        distance * 0.12
-
 
       controlsRef.current.update()
 
@@ -667,60 +1095,143 @@ function HauntedHouse({
     camera.near =
       0.01
 
-
     camera.far =
       maxDimension * 50
-
 
     camera.updateProjectionMatrix()
 
 
-    // ==========================================
-    // MATERIALS
-    // ==========================================
+    scene.traverse(
+      (object) => {
 
-    scene.traverse((object) => {
+        if (!object.isMesh)
+          return
 
-    if (!object.isMesh)
-        return
+        if (
+          object.material
+        ) {
 
-    if (object.material) {
-        object.material.side =
-        THREE.DoubleSide
-    }
+          object.material.side =
+            THREE.DoubleSide
 
-    object.raycast = () => {}
+        }
 
-    })
+        object.raycast =
+          () => {}
 
+      }
+    )
 
   }, [
     scene,
-    camera
+    camera,
+    isMobile
   ])
 
-
-  // ==================================================
-  // RETURN HOUSE
-  // ==================================================
 
   return (
 
     <>
 
-      {/* ==========================================
-          HOUSE MODEL
-      ========================================== */}
-
       <primitive
         object={scene}
         scale={1}
       />
+      {/* ==================================================
+              ROOM ENTRANCES
+          ================================================== */}
 
 
-      {/* ==========================================
-          DOOR HOTSPOT
-      ========================================== */}
+          {/* AMETHYST LIBRARY — SKILLS / EXPERIMENTS */}
+
+          <RoomDoor
+
+            name="ＴＷＯ"
+
+            position={[
+              4,
+              0.5,
+              0.4
+            ]}
+
+            rotation={[
+              0,
+              Math.PI / 2,
+              0
+            ]}
+
+            disabled={true}
+
+            onEnter={() => {
+
+              console.log(
+                '💜 AMETHYST LIBRARY'
+              )
+
+            }}
+
+          />
+
+
+          {/* SCHOOL ROOM — EDUCATION / JOURNEY */}
+
+          <RoomDoor
+
+            name="ＴＨＲＥＥ"
+
+            position={[
+              4.9,
+              7,
+              0.4
+            ]}
+            rotation={[
+              0,
+              Math.PI / 2,
+              0
+            ]}
+
+            disabled={true}
+
+            onEnter={() => {
+
+              console.log(
+                '🏫 SCHOOL ROOM'
+              )
+
+            }}
+
+          />
+
+
+          {/* THRONE ROOM — ABOUT / ACHIEVEMENTS */}
+
+          <RoomDoor
+
+            name="ＦＯＵＲ"
+
+            position={[
+              -8,
+              14,
+              -8
+            ]}
+            rotation={[
+              0,
+              Math.PI / 2,
+              0
+            ]}
+
+            disabled={true}
+
+            onEnter={() => {
+
+              console.log(
+                '👑 THRONE ROOM'
+              )
+
+            }}
+
+          />
+
 
       <mesh
 
@@ -736,191 +1247,225 @@ function HauntedHouse({
           0
         ]}
 
+        onPointerOver={
+          (event) => {
 
-        onPointerOver={(event) => {
+            event.stopPropagation()
 
-          event.stopPropagation()
+            setDoorHovered(
+              true
+            )
 
-          setDoorHovered(true)
+            document.body.style.cursor =
+              'pointer'
 
-          document.body.style.cursor =
-            'pointer'
+          }
+        }
 
-        }}
+        onPointerOut={
+          (event) => {
 
+            event.stopPropagation()
 
-        onPointerOut={(event) => {
+            setDoorHovered(
+              false
+            )
 
-          event.stopPropagation()
+            document.body.style.cursor =
+              'default'
 
-          setDoorHovered(false)
-
-          document.body.style.cursor =
-            'default'
-
-        }}
-
-
-        onDoubleClick={(event) => {
-
-          event.stopPropagation()
+          }
+        }
 
 
-          if (entering)
+        onPointerUp={(event) => {
+
+          if (
+            event.pointerType !== 'touch'
+          ) {
             return
+          }
 
+          event.stopPropagation()
+
+          if (entering) {
+            return
+          }
 
           console.log(
-            '🚪 ENTERING LIBRARY'
+            '🚪 TOUCH ENTERING LIBRARY'
           )
-
 
           setEntering(true)
 
           setDoorHovered(false)
 
-
           document.body.style.cursor =
             'default'
 
 
-          // ========================================
-          // STOP USER CONTROL
-          // ========================================
-
-          if (controlsRef.current) {
-
-            controlsRef.current.enabled =
-              false
-
-          }
-
-
-          // ========================================
-          // DOOR POSITION
-          // ========================================
-
-          const doorPosition =
-            new THREE.Vector3(
-              6.5,
-              -4.5,
-              1.5
+          // 🔊 PLAY DOOR SOUND
+          const doorSound =
+            new Audio(
+              '/sounds/door-opening.mp3'
             )
 
+          doorSound.volume = 0.8
 
-          // ========================================
-          // CAMERA DIRECTION
-          // ========================================
+          doorSound.play()
+            .then(() => {
 
-          const direction =
-            new THREE.Vector3()
-              .subVectors(
-                doorPosition,
-                camera.position
-              )
-              .normalize()
-
-
-          // ========================================
-          // CAMERA TARGET
-          // ========================================
-
-          const cameraTarget =
-            doorPosition
-              .clone()
-              .sub(
-                direction.multiplyScalar(
-                  1.8
-                )
+              console.log(
+                '🔊 DOOR SOUND PLAYING'
               )
 
+            })
+            .catch((error) => {
 
-          cameraTarget.y +=
-            0.3
+              console.error(
+                '🔊 DOOR SOUND FAILED:',
+                error
+              )
 
-
-          // ========================================
-          // CAMERA ANIMATION
-          // ========================================
-
-          gsap.to(
-            camera.position,
-            {
-
-              x:
-                cameraTarget.x,
-
-              y:
-                cameraTarget.y,
-
-              z:
-                cameraTarget.z,
+            })
 
 
-              duration:
-                2.5,
-
-
-              ease:
-                'power3.inOut',
-
-
-              onUpdate: () => {
-
-                camera.lookAt(
-                  doorPosition
-                )
-
-              },
-
-
-              onComplete: () => {
-
-                console.log(
-                  '🚪 CAMERA REACHED DOOR'
-                )
-
-
-                // ==================================
-                // DOOR SOUND
-                // ==================================
-
-                const doorSound =
-                  new Audio(
-                    '/sounds/door-opening.mp3'
-                  )
-
-
-                doorSound.volume =
-                  0.8
-
-
-                doorSound
-                  .play()
-                  .catch(
-                    (error) => {
-
-                      console.log(
-                        '🔊 Door sound failed:',
-                        error
-                      )
-
-                    }
-                  )
-
-
-                // ==================================
-                // START BLACK TRANSITION
-                // ==================================
-
-                onEnter()
-
-              }
-
-            }
-          )
+          // Enter library
+          onEnter()
 
         }}
+
+
+        onDoubleClick={
+          (event) => {
+
+            event.stopPropagation()
+
+            if (entering)
+              return
+
+            console.log(
+              '🚪 ENTERING LIBRARY'
+            )
+
+            setEntering(
+              true
+            )
+
+            setDoorHovered(
+              false
+            )
+
+            document.body.style.cursor =
+              'default'
+
+
+            if (
+              controlsRef.current
+            ) {
+
+              controlsRef.current.enabled =
+                false
+
+            }
+
+
+            const doorPosition =
+              new THREE.Vector3(
+                6.5,
+                -4.5,
+                1.5
+              )
+
+
+            const direction =
+              new THREE.Vector3()
+                .subVectors(
+                  doorPosition,
+                  camera.position
+                )
+                .normalize()
+
+
+            const cameraTarget =
+              doorPosition
+                .clone()
+                .sub(
+                  direction.multiplyScalar(
+                    1.8
+                  )
+                )
+
+
+            cameraTarget.y +=
+              0.3
+
+
+            gsap.to(
+              camera.position,
+              {
+
+                x:
+                  cameraTarget.x,
+
+                y:
+                  cameraTarget.y,
+
+                z:
+                  cameraTarget.z,
+
+                duration:
+                  2.5,
+
+                ease:
+                  'power3.inOut',
+
+                onUpdate:
+                  () => {
+
+                    camera.lookAt(
+                      doorPosition
+                    )
+
+                  },
+
+                onComplete:
+                  () => {
+
+                    console.log(
+                      '🚪 CAMERA REACHED DOOR'
+                    )
+
+                    const doorSound =
+                      new Audio(
+                        '/sounds/door-opening.mp3'
+                      )
+
+                    doorSound.volume =
+                      0.8
+
+                    doorSound
+                      .play()
+                      .catch(
+                        (error) => {
+
+                          console.log(
+                            '🔊 Door sound failed:',
+                            error
+                          )
+
+                        }
+                      )
+
+                    onEnter()
+
+                  }
+
+              }
+            )
+
+          }
+        }
 
       >
 
@@ -932,86 +1477,72 @@ function HauntedHouse({
           ]}
         />
 
-
         <meshBasicMaterial
+
           color="#A855F7"
+
           transparent
+
           opacity={
             doorHovered
               ? 0.16
               : 0
           }
-          depthWrite={false}
+
+          depthWrite={
+            false
+          }
+
         />
 
 
-        {/* ========================================
-            ENTER LABEL
-        ======================================== */}
+        {!entering && (
+          <Html
+            center
+            distanceFactor={8}
+            position={[
+              0,
+              1.8,
+              0
+            ]}
+          >
+            <div
+              style={{
+                color: '#FFFFFF',
 
-        {doorHovered &&
-          !entering && (
+                fontSize: '18px',
 
-            <Html
-              center
-              distanceFactor={8}
-              position={[
-                0,
-                1.8,
-                0
-              ]}
+                letterSpacing: '4px',
+
+                fontFamily:
+                  'Arial, Helvetica, sans-serif',
+
+                fontWeight: '500',
+
+                whiteSpace: 'nowrap',
+
+                textShadow:
+                  '0 0 8px #A855F7, 0 0 20px #A855F7',
+
+                pointerEvents: 'none',
+
+                userSelect: 'none',
+
+                opacity: doorHovered
+                  ? 1
+                  : 0.65,
+
+                transition:
+                  'opacity 0.2s ease',
+              }}
             >
-
-              <div
-                style={{
-
-                  color:
-                    '#FFFFFF',
-
-                  fontSize:
-                    '14px',
-
-                  letterSpacing:
-                    '4px',
-
-                  fontFamily:
-                    'Arial, Helvetica, sans-serif',
-
-                  fontWeight:
-                    '500',
-
-                  whiteSpace:
-                    'nowrap',
-
-                  textShadow:
-                    '0 0 8px #A855F7, 0 0 20px #A855F7',
-
-                  pointerEvents:
-                    'none',
-
-                  userSelect:
-                    'none',
-
-                  opacity:
-                    0.95
-
-                }}
-              >
-
-                ENTER
-
-              </div>
-
-            </Html>
-
-          )}
+              ＯＮＥ
+            </div>
+          </Html>
+        )}
 
       </mesh>
 
-
-      {/* ==========================================
-          HOUSE CONTROLS
-      ========================================== */}
 
       <OrbitControls
 
@@ -1025,9 +1556,17 @@ function HauntedHouse({
 
         enableZoom={true}
 
-        zoomSpeed={0.5}
+        zoomSpeed={
+          isMobile
+            ? 0.7
+            : 0.5
+        }
 
-        rotateSpeed={0.35}
+        rotateSpeed={
+          isMobile
+            ? 0.45
+            : 0.35
+        }
 
         target={[
           0,
@@ -1044,9 +1583,1355 @@ function HauntedHouse({
 }
 
 
-// ======================================================
-// MAIN SCENE
-// ======================================================
+function ProjectWindow({
+  project,
+  onClose
+}) {
+
+  useEffect(() => {
+
+    const handleKeyDown =
+      (event) => {
+
+        if (
+          event.key ===
+          'Escape'
+        ) {
+
+          onClose()
+
+        }
+
+      }
+
+
+    window.addEventListener(
+      'keydown',
+      handleKeyDown
+    )
+
+
+    return () => {
+
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown
+      )
+
+    }
+
+  }, [
+    onClose
+  ])
+
+
+  if (!project)
+    return null
+
+
+  return (
+
+    <div
+
+      style={{
+
+        position:
+          'fixed',
+
+        inset: 0,
+
+        zIndex: 1000,
+
+        display: 'flex',
+
+        alignItems:
+          'center',
+
+        justifyContent:
+          'center',
+
+        padding:
+          '20px',
+
+        background:
+          'rgba(0, 0, 0, 0.78)',
+
+        backdropFilter:
+          'blur(6px)',
+
+        WebkitBackdropFilter:
+          'blur(6px)',
+
+        animation:
+          'projectOverlayIn 0.45s ease forwards',
+
+        boxSizing:
+          'border-box',
+
+      }}
+
+      onMouseDown={
+        (event) => {
+
+          if (
+            event.target ===
+            event.currentTarget
+          ) {
+
+            onClose()
+
+          }
+
+        }
+      }
+
+    >
+
+
+      <div
+
+        className=
+          "project-journal"
+
+        style={{
+
+          position:
+            'relative',
+
+          width:
+            'min(1200px, 96vw)',
+
+          aspectRatio:
+            '16 / 10',
+
+          maxHeight:
+            '92vh',
+
+          overflow:
+            'hidden',
+
+          animation:
+            'projectJournalIn 0.65s cubic-bezier(.2,.8,.2,1)',
+
+          boxShadow:
+            '0 30px 100px rgba(0,0,0,0.8)',
+
+          borderRadius:
+            '4px',
+
+        }}
+
+      >
+
+
+        <img
+
+          src=
+            "/images/project-journal-bg.png"
+
+          alt=
+            "Project journal"
+
+          style={{
+
+            position:
+              'absolute',
+
+            inset:
+              0,
+
+            width:
+              '100%',
+
+            height:
+              '100%',
+
+            objectFit:
+              'cover',
+
+            display:
+              'block',
+
+            userSelect:
+              'none',
+
+            pointerEvents:
+              'none',
+
+          }}
+
+        />
+
+
+        <div
+
+          style={{
+
+            position:
+              'absolute',
+
+            inset:
+              0,
+
+            background:
+              'linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.10))',
+
+            pointerEvents:
+              'none',
+
+          }}
+
+        />
+
+
+        <button
+
+          className=
+            "project-close"
+
+          onClick={
+            onClose
+          }
+
+          style={{
+
+            position:
+              'absolute',
+
+            top:
+              '4.8%',
+
+            right:
+              '11.4%',
+
+            width:
+              '42px',
+
+            height:
+              '42px',
+
+            borderRadius:
+              '50%',
+
+            border:
+              '1px solid rgba(255,255,255,0.45)',
+
+            background:
+              'rgba(15,10,20,0.72)',
+
+            color:
+              '#FFFFFF',
+
+            fontSize:
+              '25px',
+
+            lineHeight:
+              '1',
+
+            cursor:
+              'pointer',
+
+            zIndex:
+              20,
+
+            display:
+              'flex',
+
+            alignItems:
+              'center',
+
+            justifyContent:
+              'center',
+
+            transition:
+              'all 0.2s ease',
+
+            boxShadow:
+              '0 0 15px rgba(0,0,0,0.45)',
+
+          }}
+
+          onMouseEnter={
+            (event) => {
+
+              event.currentTarget.style.transform =
+                'scale(1.1)'
+
+              event.currentTarget.style.background =
+                'rgba(168,85,247,0.55)'
+
+            }
+          }
+
+          onMouseLeave={
+            (event) => {
+
+              event.currentTarget.style.transform =
+                'scale(1)'
+
+              event.currentTarget.style.background =
+                'rgba(15,10,20,0.72)'
+
+            }
+          }
+
+        >
+
+          ×
+
+        </button>
+
+
+        <div
+
+          className=
+            "project-number"
+
+          style={{
+
+            position:
+              'absolute',
+
+            top:
+              '13%',
+
+            left:
+              '13%',
+
+            zIndex:
+              10,
+
+            color:
+              '#E8D6B0',
+
+            fontFamily:
+              'Georgia, "Times New Roman", serif',
+
+            fontSize:
+              'clamp(18px, 4.4vw, 22px)',
+
+            letterSpacing:
+              '4px',
+
+            fontWeight:
+              '700',
+
+            textShadow:
+              '0 2px 5px rgba(0,0,0,0.7)',
+
+          }}
+
+        >
+
+          {
+            String(
+              project.id
+            ).padStart(
+              2,
+              '0'
+            )
+          }
+
+        </div>
+
+
+        <div
+
+          className=
+            "project-image-frame"
+
+          style={{
+
+            position:
+              'absolute',
+
+            left:
+              '19%',
+
+            top:
+              '16%',
+
+            width:
+              '28%',
+
+            height:
+              '70%',
+
+            zIndex:
+              5,
+
+            overflow:
+              'hidden',
+
+            borderRadius:
+              '2px',
+
+            background:
+              'rgba(10,8,12,0.8)',
+
+            boxShadow:
+              '0 10px 30px rgba(0,0,0,0.45)',
+
+            border:
+              '1px solid rgba(255,255,255,0.12)',
+
+          }}
+
+        >
+
+          <img
+
+            src={
+              project.image
+            }
+
+            alt={
+              project.name
+            }
+
+            style={{
+
+              width:
+                '100%',
+
+              height:
+                '100%',
+
+              objectFit:
+                'cover',
+
+              display:
+                'block',
+
+            }}
+
+            onError={
+              (event) => {
+
+                event.currentTarget.style.display =
+                  'none'
+
+                event.currentTarget.parentElement.style.background =
+                  'rgba(15,10,20,0.75)'
+
+                event.currentTarget.parentElement.innerHTML =
+                  '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#cfc1aa;font:12px Arial;letter-spacing:3px;">PROJECT IMAGE</div>'
+
+              }
+            }
+
+          />
+
+        </div>
+
+
+        <div
+
+          className=
+            "project-info"
+
+          style={{
+
+            position:
+              'absolute',
+
+            left:
+              '52%',
+
+            top:
+              '25%',
+
+            width:
+              '36%',
+
+            zIndex:
+              10,
+
+            color:
+              '#FFFFFF',
+
+            textShadow:
+              '0 2px 5px rgba(0,0,0,0.65)',
+
+          }}
+
+        >
+
+          <h1
+
+            style={{
+
+              margin:
+                0,
+
+              fontFamily:
+                'Georgia, "Times New Roman", serif',
+
+              fontSize:
+                'clamp(24px, 3.2vw, 48px)',
+
+              lineHeight:
+                1,
+
+              letterSpacing:
+                '2px',
+
+              fontWeight:
+                '700',
+
+              color:
+                '#F1E5CF',
+
+            }}
+
+          >
+
+            {
+              project.name
+            }
+
+          </h1>
+
+
+          <div
+
+            style={{
+
+              marginTop:
+                '10px',
+
+              fontFamily:
+                'Arial, Helvetica, sans-serif',
+
+              fontSize:
+                'clamp(10px, 1vw, 14px)',
+
+              letterSpacing:
+                '3px',
+
+              textTransform:
+                'uppercase',
+
+              color:
+                'rgba(235,220,195,0.82)',
+
+            }}
+
+          >
+
+            {
+              project.subtitle
+            }
+
+          </div>
+
+
+          <div
+
+            style={{
+
+              width:
+                '90px',
+
+              height:
+                '1px',
+
+              margin:
+                '22px 0',
+
+              background:
+                'rgba(225,196,140,0.7)',
+
+            }}
+
+          />
+
+
+          <p
+
+            style={{
+
+              margin:
+                0,
+
+              maxWidth:
+                '500px',
+
+              fontFamily:
+                'Arial, Helvetica, sans-serif',
+
+              fontSize:
+                'clamp(12px, 1.15vw, 17px)',
+
+              lineHeight:
+                1.7,
+
+              color:
+                'rgba(245,238,225,0.9)',
+
+            }}
+
+          >
+
+            {
+              project.description
+            }
+
+          </p>
+
+
+          <div
+
+            style={{
+
+              marginTop:
+                '24px',
+
+              fontFamily:
+                'Arial, Helvetica, sans-serif',
+
+              fontSize:
+                '10px',
+
+              letterSpacing:
+                '3px',
+
+              color:
+                '#D9C18E',
+
+              marginBottom:
+                '10px',
+
+            }}
+
+          >
+
+            TECHNOLOGIES
+
+          </div>
+
+
+          <div
+
+            style={{
+
+              display:
+                'flex',
+
+              flexWrap:
+                'wrap',
+
+              gap:
+                '7px',
+
+            }}
+
+          >
+
+            {
+              project.technologies.map(
+                (technology) => (
+
+                  <span
+
+                    key={
+                      technology
+                    }
+
+                    style={{
+
+                      padding:
+                        '6px 10px',
+
+                      border:
+                        '1px solid rgba(220,190,135,0.5)',
+
+                      background:
+                        'rgba(0,0,0,0.28)',
+
+                      color:
+                        '#E7D8B8',
+
+                      fontFamily:
+                        'Arial, Helvetica, sans-serif',
+
+                      fontSize:
+                        '10px',
+
+                      letterSpacing:
+                        '1px',
+
+                      borderRadius:
+                        '2px',
+
+                    }}
+
+                  >
+
+                    {
+                      technology
+                    }
+
+                  </span>
+
+                )
+              )
+            }
+
+          </div>
+
+
+          <div
+
+            className=
+              "project-buttons"
+
+            style={{
+
+              display:
+                'flex',
+
+              flexWrap:
+                'wrap',
+
+              gap:
+                '12px',
+
+              marginTop:
+                '28px',
+
+            }}
+
+          >
+
+            <a
+
+              className=
+                "project-button project-button-primary"
+
+              href={
+                project.liveUrl
+              }
+
+              target="_blank"
+
+              rel="noreferrer"
+
+              onMouseEnter={
+                (event) => {
+
+                  event.currentTarget.style.transform =
+                    'translateY(-2px)'
+
+                  event.currentTarget.style.boxShadow =
+                    '0 0 22px rgba(168,85,247,0.45), inset 0 0 15px rgba(168,85,247,0.15)'
+
+                }
+              }
+
+              onMouseLeave={
+                (event) => {
+
+                  event.currentTarget.style.transform =
+                    'translateY(0)'
+
+                  event.currentTarget.style.boxShadow =
+                    '0 0 12px rgba(168,85,247,0.18), inset 0 0 12px rgba(168,85,247,0.08)'
+
+                }
+              }
+
+              style={{
+
+                display:
+                  'inline-flex',
+
+                alignItems:
+                  'center',
+
+                justifyContent:
+                  'center',
+
+                padding:
+                  '12px 20px',
+
+                minWidth:
+                  '155px',
+
+                background:
+                  'linear-gradient(135deg, rgba(70,35,95,0.88), rgba(25,15,35,0.92))',
+
+                border:
+                  '1px solid rgba(216,178,104,0.75)',
+
+                color:
+                  '#F2DFB5',
+
+                textDecoration:
+                  'none',
+
+                fontFamily:
+                  'Arial, Helvetica, sans-serif',
+
+                fontSize:
+                  '11px',
+
+                fontWeight:
+                  '700',
+
+                letterSpacing:
+                  '2px',
+
+                borderRadius:
+                  '2px',
+
+                boxShadow:
+                  '0 0 12px rgba(168,85,247,0.18), inset 0 0 12px rgba(168,85,247,0.08)',
+
+                transition:
+                  'all 0.25s ease',
+
+                cursor:
+                  'pointer',
+
+              }}
+
+            >
+
+              VIEW PROJECT ↗
+
+            </a>
+
+
+            <a
+
+              className=
+                "project-button project-button-secondary"
+
+              href={
+                project.githubUrl
+              }
+
+              target="_blank"
+
+              rel="noreferrer"
+
+              onMouseEnter={
+                (event) => {
+
+                  event.currentTarget.style.transform =
+                    'translateY(-2px)'
+
+                  event.currentTarget.style.borderColor =
+                    'rgba(216,178,104,0.65)'
+
+                  event.currentTarget.style.boxShadow =
+                    '0 0 16px rgba(216,178,104,0.18)'
+
+                }
+              }
+
+              onMouseLeave={
+                (event) => {
+
+                  event.currentTarget.style.transform =
+                    'translateY(0)'
+
+                  event.currentTarget.style.borderColor =
+                    'rgba(255,255,255,0.28)'
+
+                  event.currentTarget.style.boxShadow =
+                    '0 0 10px rgba(0,0,0,0.25)'
+
+                }
+              }
+
+              style={{
+
+                display:
+                  'inline-flex',
+
+                alignItems:
+                  'center',
+
+                justifyContent:
+                  'center',
+
+                padding:
+                  '12px 20px',
+
+                minWidth:
+                  '125px',
+
+                background:
+                  'rgba(15,10,22,0.55)',
+
+                border:
+                  '1px solid rgba(255,255,255,0.28)',
+
+                color:
+                  '#E8DCC7',
+
+                textDecoration:
+                  'none',
+
+                fontFamily:
+                  'Arial, Helvetica, sans-serif',
+
+                fontSize:
+                  '11px',
+
+                fontWeight:
+                  '700',
+
+                letterSpacing:
+                  '2px',
+
+                borderRadius:
+                  '2px',
+
+                boxShadow:
+                  '0 0 10px rgba(0,0,0,0.25)',
+
+                transition:
+                  'all 0.25s ease',
+
+                cursor:
+                  'pointer',
+
+              }}
+
+            >
+
+              GITHUB ↗
+
+            </a>
+
+          </div>
+
+        </div>
+
+
+        <div
+
+          className=
+            "project-instruction"
+
+          style={{
+
+            position:
+              'absolute',
+
+            bottom:
+              '7%',
+
+            right:
+              '10%',
+
+            zIndex:
+              10,
+
+            color:
+              'rgba(230,215,190,0.7)',
+
+            fontFamily:
+              'Arial, Helvetica, sans-serif',
+
+            fontSize:
+              '9px',
+
+            letterSpacing:
+              '2px',
+
+          }}
+
+        >
+
+          ESC · CLOSE
+
+        </div>
+
+
+      </div>
+
+
+      <style>{`
+
+        @keyframes projectOverlayIn {
+
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
+
+        }
+
+
+        @keyframes projectJournalIn {
+
+          from {
+
+            opacity: 0;
+
+            transform:
+              scale(0.92)
+              translateY(25px);
+
+          }
+
+          to {
+
+            opacity: 1;
+
+            transform:
+              scale(1)
+              translateY(0);
+
+          }
+
+        }
+
+
+        @media (max-width: 700px) {
+
+          html,
+          body,
+          #root {
+
+            width:
+              100%;
+
+            height:
+              100%;
+
+            margin:
+              0;
+
+            overflow:
+              hidden;
+
+          }
+
+
+          .scene-root {
+
+            width:
+              100% !important;
+
+            height:
+              100dvh !important;
+
+            min-height:
+              100dvh !important;
+
+            overflow:
+              hidden !important;
+
+            touch-action:
+              none;
+
+          }
+
+
+          .library-exit-button {
+
+            top:
+              max(
+                14px,
+                env(safe-area-inset-top)
+              ) !important;
+
+            left:
+              max(
+                14px,
+                env(safe-area-inset-left)
+              ) !important;
+
+            padding:
+              12px 14px !important;
+
+            min-height:
+              44px !important;
+
+            font-size:
+              10px !important;
+
+            letter-spacing:
+              1.5px !important;
+
+            border-radius:
+              3px !important;
+
+          }
+
+
+          .project-journal {
+
+            width:
+              96vw !important;
+
+            height:
+              92dvh !important;
+
+            max-height:
+              92dvh !important;
+
+            aspect-ratio:
+              auto !important;
+
+            overflow-y:
+              auto !important;
+
+            overflow-x:
+              hidden !important;
+
+            -webkit-overflow-scrolling:
+              touch;
+
+            border-radius:
+              5px !important;
+
+          }
+
+
+          .project-journal > img {
+
+            object-fit:
+              fill !important;
+
+          }
+
+
+          .project-close {
+
+            top:
+              3% !important;
+
+            right:
+              4% !important;
+
+            width:
+              42px !important;
+
+            height:
+              42px !important;
+
+            font-size:
+              24px !important;
+
+          }
+
+
+          .project-number {
+
+            top:
+              5% !important;
+
+            left:
+              8% !important;
+
+            font-size:
+              18px !important;
+
+            letter-spacing:
+              3px !important;
+
+          }
+
+
+          .project-image-frame {
+
+            left:
+              8% !important;
+
+            top:
+              14% !important;
+
+            width:
+              84% !important;
+
+            height:
+              30% !important;
+
+          }
+
+
+          .project-info {
+
+            position:
+              absolute !important;
+
+            left:
+              8% !important;
+
+            top:
+              48% !important;
+
+            width:
+              84% !important;
+
+            padding-bottom:
+              30px !important;
+
+          }
+
+
+          .project-info h1 {
+
+            font-size:
+              clamp(
+                24px,
+                8vw,
+                34px
+              ) !important;
+
+            line-height:
+              1.05 !important;
+
+            letter-spacing:
+              1px !important;
+
+          }
+
+
+          .project-info > div {
+
+            font-size:
+              9px !important;
+
+            letter-spacing:
+              2px !important;
+
+          }
+
+
+          .project-info p {
+
+            font-size:
+              12px !important;
+
+            line-height:
+              1.55 !important;
+
+          }
+
+
+          .project-info span {
+
+            font-size:
+              9px !important;
+
+            padding:
+              6px 8px !important;
+
+          }
+
+
+          .project-buttons {
+
+            flex-direction:
+              column !important;
+
+            width:
+              100% !important;
+
+            gap:
+              9px !important;
+
+            margin-top:
+              20px !important;
+
+          }
+
+
+          .project-button {
+
+            width:
+              100% !important;
+
+            min-width:
+              0 !important;
+
+            min-height:
+              44px !important;
+
+            box-sizing:
+              border-box !important;
+
+            padding:
+              11px 14px !important;
+
+            font-size:
+              10px !important;
+
+            letter-spacing:
+              1.5px !important;
+
+          }
+
+
+          .project-instruction {
+
+            display:
+              none !important;
+
+          }
+
+        }
+
+
+        @media (max-width: 380px) {
+
+          .project-journal {
+
+            width:
+              98vw !important;
+
+            height:
+              94dvh !important;
+
+          }
+
+
+          .project-image-frame {
+
+            top:
+              13% !important;
+
+            height:
+              28% !important;
+
+          }
+
+
+          .project-info {
+
+            top:
+              45% !important;
+
+          }
+
+
+          .project-info p {
+
+            font-size:
+              11px !important;
+
+          }
+
+        }
+
+      `}</style>
+
+    </div>
+
+  )
+
+}
+
 
 function Scene() {
 
@@ -1064,78 +2949,115 @@ function Scene() {
     useState(false)
 
 
+  const [
+    hoveredProject,
+    setHoveredProject
+  ] =
+    useState(null)
+
+
+  const [
+    selectedProject,
+    setSelectedProject
+  ] =
+    useState(null)
+
+
   const themeAudioRef =
     useRef(null)
 
 
-  // ==================================================
-  // THEME MUSIC
-  // ==================================================
-
   useEffect(() => {
 
-    const startTheme = () => {
+    let audio = null
 
-      if (
-        themeAudioRef.current
-      ) {
+    const startTheme = async () => {
+
+      if (audio) {
         return
       }
 
+      audio = new Audio(
+        '/sounds/theme.mp3'
+      )
 
-      const audio =
-        new Audio(
-          '/sounds/theme.mp3'
+      audio.loop = true
+
+      audio.volume = 0.35
+
+      try {
+
+        await audio.play()
+
+        console.log(
+          '🎵 THEME PLAYING'
         )
 
+        themeAudioRef.current =
+          audio
 
-      audio.loop =
-        true
+        document.removeEventListener(
+          'pointerdown',
+          startTheme
+        )
 
+        document.removeEventListener(
+          'touchstart',
+          startTheme
+        )
 
-      audio.volume =
-        0.35
+        document.removeEventListener(
+          'click',
+          startTheme
+        )
 
+      } catch (error) {
 
-      audio.play()
-        .then(() => {
+        console.log(
+          '🎵 Theme playback waiting for interaction:',
+          error
+        )
 
-          console.log(
-            '🎵 THEME PLAYING'
-          )
+        audio = null
 
-        })
-        .catch(() => {
-
-          console.log(
-            '🎵 Theme waiting for user interaction'
-          )
-
-        })
-
-
-      themeAudioRef.current =
-        audio
-
-
-      window.removeEventListener(
-        'pointerdown',
-        startTheme
-      )
+      }
 
     }
 
 
-    window.addEventListener(
+    document.addEventListener(
       'pointerdown',
-      startTheme
+      startTheme,
+      { passive: true }
+    )
+
+    document.addEventListener(
+      'touchstart',
+      startTheme,
+      { passive: true }
+    )
+
+    document.addEventListener(
+      'click',
+      startTheme,
+      { passive: true }
     )
 
 
     return () => {
 
-      window.removeEventListener(
+      document.removeEventListener(
         'pointerdown',
+        startTheme
+      )
+
+      document.removeEventListener(
+        'touchstart',
+        startTheme
+      )
+
+      document.removeEventListener(
+        'click',
         startTheme
       )
 
@@ -1145,6 +3067,9 @@ function Scene() {
       ) {
 
         themeAudioRef.current.pause()
+
+        themeAudioRef.current.currentTime =
+          0
 
         themeAudioRef.current =
           null
@@ -1156,60 +3081,157 @@ function Scene() {
   }, [])
 
 
-  // ==================================================
-  // ENTER LIBRARY
-  // ==================================================
+  useEffect(() => {
 
-  const enterLibrary = () => {
+    const handleProjectKey =
+      (event) => {
 
-    setTransitioning(true)
+        if (
+          event.key.toLowerCase() ===
+            'e' &&
+          hoveredProject
+        ) {
+
+          setSelectedProject(
+            hoveredProject
+          )
+
+        }
+
+      }
 
 
-    setTimeout(() => {
-
-      setCurrentRoom(
-        'library'
-      )
-
-    }, 1300)
-
-  }
-
-
-  // ==================================================
-  // LIBRARY READY
-  // ==================================================
-
-  const libraryReady = () => {
-
-    console.log(
-      '📚 LIBRARY READY'
+    window.addEventListener(
+      'keydown',
+      handleProjectKey
     )
 
 
-    setTimeout(() => {
+    return () => {
 
-      setTransitioning(false)
+      window.removeEventListener(
+        'keydown',
+        handleProjectKey
+      )
 
-    }, 500)
+    }
 
-  }
+  }, [
+    hoveredProject
+  ])
 
 
-  // ==================================================
-  // MAIN RETURN
-  // ==================================================
+  const enterLibrary =
+    () => {
+
+      setTransitioning(
+        true
+      )
+
+
+      setTimeout(
+        () => {
+
+          setCurrentRoom(
+            'library'
+          )
+
+        },
+        1300
+      )
+
+    }
+
+
+  const exitLibrary =
+    () => {
+
+      console.log(
+        '🚪 EXITING LIBRARY'
+      )
+
+
+      setSelectedProject(
+        null
+      )
+
+
+      setHoveredProject(
+        null
+      )
+
+
+      setTransitioning(
+        true
+      )
+
+
+      setTimeout(
+        () => {
+
+          setCurrentRoom(
+            'house'
+          )
+
+        },
+        1300
+      )
+
+
+      setTimeout(
+        () => {
+
+          setTransitioning(
+            false
+          )
+
+        },
+        1900
+      )
+
+    }
+
+
+  const libraryReady =
+    () => {
+
+      console.log(
+        '📚 LIBRARY READY'
+      )
+
+
+      setTimeout(
+        () => {
+
+          setTransitioning(
+            false
+          )
+
+        },
+        500
+      )
+
+    }
+
+
+  const projectsForScene =
+    PROJECTS
+
 
   return (
 
     <div
+
+      className=
+        "scene-root"
+
       style={{
 
         width:
           '100%',
 
         height:
-          '100vh',
+          '100dvh',
 
         position:
           'relative',
@@ -1230,12 +3252,9 @@ function Scene() {
           'no-repeat'
 
       }}
+
     >
 
-
-      {/* ==========================================
-          THREE.JS CANVAS
-      ========================================== */}
 
       <Canvas
 
@@ -1273,7 +3292,10 @@ function Scene() {
             0,
 
           background:
-            'transparent'
+            'transparent',
+
+          touchAction:
+            'none'
 
         }}
 
@@ -1285,10 +3307,6 @@ function Scene() {
 
       >
 
-
-        {/* ========================================
-            LIGHTING
-        ======================================== */}
 
         <directionalLight
 
@@ -1420,45 +3438,220 @@ function Scene() {
         />
 
 
-        {/* ========================================
-            HAUNTED HOUSE
-        ======================================== */}
+        {
+          currentRoom ===
+            'house' && (
 
-        {currentRoom ===
-          'house' && (
+            <HauntedHouse
+              onEnter={
+                enterLibrary
+              }
+            />
 
-          <HauntedHouse
-            onEnter={
-              enterLibrary
-            }
-          />
-
-        )}
+          )
+        }
 
 
-        {/* ========================================
-            LIBRARY
-        ======================================== */}
+        {
+          currentRoom ===
+            'library' && (
 
-        {currentRoom ===
-          'library' && (
+            <LibraryRoom
 
-          <LibraryRoom
-            onReady={
-              libraryReady
-            }
-          />
+              onReady={
+                libraryReady
+              }
 
-        )}
+              onProjectHover={
+                setHoveredProject
+              }
+
+              onProjectSelect={
+                setSelectedProject
+              }
+
+            />
+
+          )
+        }
+
 
       </Canvas>
 
 
-      {/* ==========================================
-          BLACK TRANSITION
-      ========================================== */}
+      {
+        currentRoom ===
+          'library' &&
+        selectedProject && (
+
+          <ProjectWindow
+
+            project={
+              projectsForScene.find(
+                (project) =>
+                  project.id ===
+                  selectedProject
+              )
+            }
+
+            onClose={
+              () =>
+                setSelectedProject(
+                  null
+                )
+            }
+
+          />
+
+        )
+      }
+
+
+      {
+        currentRoom ===
+          'library' &&
+        !selectedProject && (
+
+          <button
+
+            className=
+              "library-exit-button"
+
+            onClick={
+              exitLibrary
+            }
+
+            style={{
+
+              position:
+                'absolute',
+
+              top:
+                '24px',
+
+              left:
+                '24px',
+
+              zIndex:
+                50,
+
+              padding:
+                '10px 16px',
+
+              display:
+                'flex',
+
+              alignItems:
+                'center',
+
+              gap:
+                '8px',
+
+              background:
+                'rgba(8, 6, 12, 0.72)',
+
+              border:
+                '1px solid rgba(216, 178, 104, 0.55)',
+
+              color:
+                '#E8D6B0',
+
+              fontFamily:
+                'Arial, Helvetica, sans-serif',
+
+              fontSize:
+                '11px',
+
+              fontWeight:
+                '600',
+
+              letterSpacing:
+                '2px',
+
+              cursor:
+                'pointer',
+
+              backdropFilter:
+                'blur(6px)',
+
+              boxShadow:
+                '0 0 15px rgba(0,0,0,0.35)',
+
+              transition:
+                'all 0.25s ease',
+
+              touchAction:
+                'manipulation'
+
+            }}
+
+
+            onMouseEnter={
+              (event) => {
+
+                event.currentTarget.style.background =
+                  'rgba(55, 30, 75, 0.85)'
+
+                event.currentTarget.style.borderColor =
+                  'rgba(216, 178, 104, 0.9)'
+
+                event.currentTarget.style.boxShadow =
+                  '0 0 20px rgba(168,85,247,0.3)'
+
+              }
+            }
+
+
+            onMouseLeave={
+              (event) => {
+
+                event.currentTarget.style.background =
+                  'rgba(8, 6, 12, 0.72)'
+
+                event.currentTarget.style.borderColor =
+                  'rgba(216, 178, 104, 0.55)'
+
+                event.currentTarget.style.boxShadow =
+                  '0 0 15px rgba(0,0,0,0.35)'
+
+              }
+            }
+
+          >
+
+            <span
+
+              style={{
+
+                fontSize:
+                  '16px',
+
+                lineHeight:
+                  1,
+
+              }}
+
+            >
+
+              ←
+
+            </span>
+
+
+            <span>
+
+              EXIT LIBRARY
+
+            </span>
+
+          </button>
+
+        )
+      }
+
 
       <div
+
         style={{
 
           position:
@@ -1485,7 +3678,9 @@ function Scene() {
             10
 
         }}
+
       />
+
 
     </div>
 
