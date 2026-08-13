@@ -1,4 +1,7 @@
 import { Canvas, useThree } from '@react-three/fiber'
+import AmethystLibraryRoom
+  from './AmethystLibraryRoom'
+import SchoolRoom from './SchoolRoom'  
 import {
   OrbitControls,
   useGLTF,
@@ -754,10 +757,143 @@ function RoomDoor({
   rotation = [0, 0, 0],
   onEnter,
   disabled = false,
+  animateEntry = false,
+  controlsRef,
 }) {
 
   const [hovered, setHovered] =
     useState(false)
+  
+  const { camera } = useThree()  
+  const handleEnter = () => {
+
+    if (disabled) {
+      return
+    }
+
+    // Normal doors
+    if (!animateEntry) {
+      onEnter()
+      return
+    }
+
+    // ========================================
+    // 🎥 STOP CAMERA CONTROLS
+    // ========================================
+
+    if (controlsRef?.current) {
+      controlsRef.current.enabled = false
+    }
+
+
+    // ========================================
+    // 🚪 AMETHYST DOOR POSITION
+    // ========================================
+
+    const doorPosition =
+      new THREE.Vector3(
+        position[0],
+        position[1],
+        position[2]
+      )
+
+
+    // ========================================
+    // 📷 CAMERA DIRECTION
+    // ========================================
+
+    const direction =
+      new THREE.Vector3()
+        .subVectors(
+          doorPosition,
+          camera.position
+        )
+        .normalize()
+
+
+    // ========================================
+    // 🎯 CAMERA STOP POSITION
+    // ========================================
+
+    const cameraTarget =
+      doorPosition
+        .clone()
+        .sub(
+          direction.multiplyScalar(
+            1.8
+          )
+        )
+
+    cameraTarget.y += 0.3
+
+
+    // ========================================
+    // 🎥 MOVE TOWARD DOOR
+    // ========================================
+
+    gsap.to(
+      camera.position,
+      {
+
+        x:
+          cameraTarget.x,
+
+        y:
+          cameraTarget.y,
+
+        z:
+          cameraTarget.z,
+
+        duration:
+          2.5,
+
+        ease:
+          'power3.inOut',
+
+        onUpdate: () => {
+
+          camera.lookAt(
+            doorPosition
+          )
+
+        },
+
+        onComplete: () => {
+
+          console.log(
+            '💜 CAMERA REACHED AMETHYST DOOR'
+          )
+
+
+          // 🔊 PLAY AMETHYST DOOR SOUND
+
+          const doorSound =
+            new Audio(
+              '/sounds/amethyst-door.mp3'
+            )
+
+          doorSound.volume = 0.8
+
+          doorSound.play()
+            .catch((error) => {
+
+              console.log(
+                '🔊 Amethyst door sound failed:',
+                error
+              )
+
+            })
+
+
+          // 🚪 ENTER AMETHYST
+
+          onEnter()
+
+        }
+
+      }
+    )
+  }
 
   return (
     <group
@@ -806,7 +942,7 @@ function RoomDoor({
             return
           }
 
-          onEnter()
+          handleEnter()
 
         }}
 
@@ -818,7 +954,7 @@ function RoomDoor({
             return
           }
 
-          onEnter()
+          handleEnter()
 
         }}
 
@@ -911,7 +1047,9 @@ function RoomDoor({
 }
 
 function HauntedHouse({
-  onEnter
+  onEnter,
+  onEnterAmethyst,
+  onEnterSchool
 }) {
 
   const {
@@ -1160,15 +1298,15 @@ function HauntedHouse({
               0
             ]}
 
-            disabled={true}
+            disabled={false}
 
-            onEnter={() => {
+            animateEntry={true}
 
-              console.log(
-                '💜 AMETHYST LIBRARY'
-              )
+            controlsRef={controlsRef}
 
-            }}
+            onEnter={
+              onEnterAmethyst
+            }
 
           />
 
@@ -1184,19 +1322,26 @@ function HauntedHouse({
               7,
               0.4
             ]}
+
             rotation={[
               0,
               Math.PI / 2,
               0
             ]}
 
-            disabled={true}
+            disabled={false}
+
+            animateEntry={true}
+
+            controlsRef={controlsRef}
 
             onEnter={() => {
 
               console.log(
-                '🏫 SCHOOL ROOM'
+                '🏫 THREE CLICKED'
               )
+
+              onEnterSchool()
 
             }}
 
@@ -1570,7 +1715,7 @@ function HauntedHouse({
 
         target={[
           0,
-          0,
+          7,
           0
         ]}
 
@@ -3190,6 +3335,56 @@ function Scene() {
       )
 
     }
+    const enterAmethyst = () => {
+
+      console.log(
+        '💜 ENTERING AMETHYST LIBRARY'
+      )
+
+      setTransitioning(true)
+
+      setTimeout(() => {
+
+        setCurrentRoom(
+          'amethyst'
+        )
+
+      }, 1300)
+
+      setTimeout(() => {
+
+        setTransitioning(
+          false
+        )
+
+      }, 1900)
+
+    }
+    const enterSchool = () => {
+
+      console.log(
+        '🏫 ENTERING SCHOOL ROOM'
+      )
+
+      setTransitioning(true)
+
+      setTimeout(() => {
+
+        setCurrentRoom(
+          'school'
+        )
+
+      }, 1300)
+
+      setTimeout(() => {
+
+        setTransitioning(
+          false
+        )
+
+      }, 1900)
+
+    }
 
 
   const libraryReady =
@@ -3210,6 +3405,19 @@ function Scene() {
         },
         500
       )
+
+    }
+    const exitAmethyst = () => {
+
+      setTransitioning(true)
+
+      setTimeout(() => {
+
+        setCurrentRoom('house')
+
+        setTransitioning(false)
+
+      }, 1300)
 
     }
 
@@ -3446,6 +3654,12 @@ function Scene() {
               onEnter={
                 enterLibrary
               }
+              onEnterAmethyst={
+                enterAmethyst
+              }
+              onEnterSchool={
+                enterSchool
+              }
             />
 
           )
@@ -3474,7 +3688,56 @@ function Scene() {
 
           )
         }
+        {
+          currentRoom === 'amethyst' && (
 
+            <AmethystLibraryRoom
+              onExit={() => {
+
+                setTransitioning(true)
+
+                setTimeout(() => {
+
+                  setCurrentRoom(
+                    'house'
+                  )
+
+                }, 1300)
+
+              }}
+            />
+
+          )
+        }
+        {
+          currentRoom === 'school' && (
+
+            <SchoolRoom
+              onExit={() => {
+
+                setTransitioning(true)
+
+                setTimeout(() => {
+
+                  setCurrentRoom(
+                    'house'
+                  )
+
+                }, 1300)
+
+                setTimeout(() => {
+
+                  setTransitioning(
+                    false
+                  )
+
+                }, 1900)
+
+              }}
+            />
+
+          )
+        }
 
       </Canvas>
 
@@ -3648,6 +3911,102 @@ function Scene() {
 
         )
       }
+      {/* ==================================================
+              AMETHYST EXIT
+          ================================================== */}
+
+          {currentRoom === 'amethyst' && (
+            <button
+              onClick={exitAmethyst}
+
+              style={{
+                position: 'absolute',
+                top: '24px',
+                left: '24px',
+                zIndex: 50,
+
+                padding: '10px 16px',
+
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+
+                background:
+                  'rgba(8, 6, 12, 0.72)',
+
+                border:
+                  '1px solid rgba(216, 178, 104, 0.55)',
+
+                color:
+                  '#E8D6B0',
+
+                fontFamily:
+                  'Arial, Helvetica, sans-serif',
+
+                fontSize:
+                  '11px',
+
+                fontWeight:
+                  '600',
+
+                letterSpacing:
+                  '2px',
+
+                cursor:
+                  'pointer',
+
+                backdropFilter:
+                  'blur(6px)',
+
+                boxShadow:
+                  '0 0 15px rgba(0,0,0,0.35)',
+
+                transition:
+                  'all 0.25s ease',
+              }}
+
+              onMouseEnter={(event) => {
+
+                event.currentTarget.style.background =
+                  'rgba(55, 30, 75, 0.85)'
+
+                event.currentTarget.style.borderColor =
+                  'rgba(216, 178, 104, 0.9)'
+
+                event.currentTarget.style.boxShadow =
+                  '0 0 20px rgba(168,85,247,0.3)'
+
+              }}
+
+              onMouseLeave={(event) => {
+
+                event.currentTarget.style.background =
+                  'rgba(8, 6, 12, 0.72)'
+
+                event.currentTarget.style.borderColor =
+                  'rgba(216, 178, 104, 0.55)'
+
+                event.currentTarget.style.boxShadow =
+                  '0 0 15px rgba(0,0,0,0.35)'
+
+              }}
+            >
+
+              <span
+                style={{
+                  fontSize: '16px',
+                  lineHeight: 1,
+                }}
+              >
+                ←
+              </span>
+
+              <span>
+                EXIT LIBRARY
+              </span>
+
+            </button>
+          )}
 
 
       <div
