@@ -3420,6 +3420,19 @@ function Scene() {
       }, 1300)
 
     }
+    const exitSchool = () => {
+
+      setTransitioning(true)
+
+      setTimeout(() => {
+
+        setCurrentRoom('house')
+
+        setTransitioning(false)
+
+      }, 1300)
+
+    }
 
 
   const projectsForScene =
@@ -4007,6 +4020,114 @@ function Scene() {
 
             </button>
           )}
+          {/* ==================================================
+                  SCHOOL ROOM EXIT
+              ================================================== */}
+
+              {currentRoom === 'school' && (
+                <button
+                  onClick={() => {
+
+                    setTransitioning(true)
+
+                    setTimeout(() => {
+
+                      setCurrentRoom('house')
+
+                      setTransitioning(false)
+
+                    }, 1300)
+
+                  }}
+
+                  style={{
+                    position: 'absolute',
+                    top: '24px',
+                    left: '24px',
+                    zIndex: 50,
+
+                    padding: '10px 16px',
+
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+
+                    background:
+                      'rgba(8, 6, 12, 0.72)',
+
+                    border:
+                      '1px solid rgba(216, 178, 104, 0.55)',
+
+                    color:
+                      '#E8D6B0',
+
+                    fontFamily:
+                      'Arial, Helvetica, sans-serif',
+
+                    fontSize:
+                      '11px',
+
+                    fontWeight:
+                      '600',
+
+                    letterSpacing:
+                      '2px',
+
+                    cursor:
+                      'pointer',
+
+                    backdropFilter:
+                      'blur(6px)',
+
+                    boxShadow:
+                      '0 0 15px rgba(0,0,0,0.35)',
+
+                    transition:
+                      'all 0.25s ease',
+                  }}
+
+                  onMouseEnter={(event) => {
+
+                    event.currentTarget.style.background =
+                      'rgba(55, 30, 75, 0.85)'
+
+                    event.currentTarget.style.borderColor =
+                      'rgba(216, 178, 104, 0.9)'
+
+                    event.currentTarget.style.boxShadow =
+                      '0 0 20px rgba(168,85,247,0.3)'
+
+                  }}
+
+                  onMouseLeave={(event) => {
+
+                    event.currentTarget.style.background =
+                      'rgba(8, 6, 12, 0.72)'
+
+                    event.currentTarget.style.borderColor =
+                      'rgba(216, 178, 104, 0.55)'
+
+                    event.currentTarget.style.boxShadow =
+                      '0 0 15px rgba(0,0,0,0.35)'
+
+                  }}
+                >
+
+                  <span
+                    style={{
+                      fontSize: '16px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ←
+                  </span>
+
+                  <span>
+                    EXIT SCHOOL
+                  </span>
+
+                </button>
+              )}
 
 
       <div
@@ -4037,6 +4158,7 @@ function Scene() {
             10
 
         }}
+        
 
       />
 
