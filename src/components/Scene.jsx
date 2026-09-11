@@ -1,7 +1,9 @@
+import './archive.css'
 import { Canvas, useThree } from '@react-three/fiber'
 import AmethystLibraryRoom
   from './AmethystLibraryRoom'
-import SchoolRoom from './SchoolRoom'  
+import SchoolRoom from './SchoolRoom'
+import ThroneRoom from './ThroneRoom'
 import {
   OrbitControls,
   useGLTF,
@@ -24,7 +26,7 @@ const PROJECTS = [
     description:
       'A campus-focused platform built to connect university students, opportunities, services, and campus life.',
     technologies: ['React Native', 'Expo', 'Supabase'],
-    liveUrl: 'https://github.com/SagarChhetrii',
+    liveUrl: 'https://www.onlystudents.co.in/',
     githubUrl: 'https://github.com/SagarChhetrii'
   },
   {
@@ -87,7 +89,7 @@ function LibraryRoom({
   const isMobile =
     typeof window !== 'undefined' &&
     window.matchMedia(
-      '(max-width: 700px)'
+      '(max-width: 768px)'
     ).matches
 
   useEffect(() => {
@@ -136,10 +138,8 @@ function LibraryRoom({
     scene.position.z -=
       center.z
 
-    const startDistance =
-      isMobile
-        ? 685
-        : 700
+    // Mobile: zoom OUT more (larger distance)
+    const startDistance = isMobile ? 850 : 700
 
     camera.position.set(
       0,
@@ -219,9 +219,7 @@ function LibraryRoom({
         startDistance
 
       controlsRef.current.minDistance =
-        isMobile
-          ? 240
-          : 280
+        280
 
       controlsRef.current.zoomSpeed =
         0.35
@@ -243,8 +241,7 @@ function LibraryRoom({
   }, [
     scene,
     camera,
-    onReady,
-    isMobile
+    onReady
   ])
 
 
@@ -731,17 +728,9 @@ function LibraryRoom({
           0.65
         }
 
-        maxDistance={
-          isMobile
-            ? 560
-            : 700
-        }
+        maxDistance={700}
 
-        minDistance={
-          isMobile
-            ? 240
-            : 280
-        }
+        minDistance={280}
 
       />
 
@@ -1049,7 +1038,8 @@ function RoomDoor({
 function HauntedHouse({
   onEnter,
   onEnterAmethyst,
-  onEnterSchool
+  onEnterSchool,
+  onEnterThrone
 }) {
 
   const {
@@ -1066,12 +1056,6 @@ function HauntedHouse({
 
   const controlsRef =
     useRef()
-
-  const isMobile =
-    typeof window !== 'undefined' &&
-    window.matchMedia(
-      '(max-width: 700px)'
-    ).matches
 
   const [
     doorHovered,
@@ -1163,18 +1147,11 @@ function HauntedHouse({
 
     camera.position.set(
 
-      distance *
-        (
-          isMobile
-            ? 3
-            : 10
-        ),
+      distance * 10,
 
-      distance *
-        0.45,
+      distance * 0.45,
 
-      distance *
-        0.85
+      distance * 0.85
 
     )
 
@@ -1262,8 +1239,7 @@ function HauntedHouse({
 
   }, [
     scene,
-    camera,
-    isMobile
+    camera
   ])
 
 
@@ -1359,19 +1335,26 @@ function HauntedHouse({
               14,
               -8
             ]}
+
             rotation={[
               0,
               Math.PI / 2,
               0
             ]}
 
-            disabled={true}
+            disabled={false}
+
+            animateEntry={true}
+
+            controlsRef={controlsRef}
 
             onEnter={() => {
 
               console.log(
-                '👑 THRONE ROOM'
+                '👑 ENTERING THRONE ROOM'
               )
+
+              onEnterThrone()
 
             }}
 
@@ -1701,17 +1684,9 @@ function HauntedHouse({
 
         enableZoom={true}
 
-        zoomSpeed={
-          isMobile
-            ? 0.7
-            : 0.5
-        }
+        zoomSpeed={0.5}
 
-        rotateSpeed={
-          isMobile
-            ? 0.45
-            : 0.35
-        }
+        rotateSpeed={0.35}
 
         target={[
           0,
@@ -1944,7 +1919,7 @@ function ProjectWindow({
               'absolute',
 
             top:
-              '4.8%',
+              '5%',
 
             right:
               '11.4%',
@@ -3108,6 +3083,20 @@ function Scene() {
     useState(null)
 
 
+  const [
+    amethystFlash,
+    setAmethystFlash
+  ] =
+    useState(false)
+
+
+  const [
+    amethystArchiveOpen,
+    setAmethystArchiveOpen
+  ] =
+    useState(false)
+
+
   const themeAudioRef =
     useRef(null)
 
@@ -3385,6 +3374,26 @@ function Scene() {
       }, 1900)
 
     }
+    const enterThrone = () => {
+
+      setTransitioning(true)
+
+      setTimeout(() => {
+
+        setCurrentRoom(
+          'throne'
+        )
+
+      }, 1300)
+
+
+      setTimeout(() => {
+
+        setTransitioning(false)
+
+      }, 1900)
+
+    }
 
 
   const libraryReady =
@@ -3421,6 +3430,19 @@ function Scene() {
 
     }
     const exitSchool = () => {
+
+      setTransitioning(true)
+
+      setTimeout(() => {
+
+        setCurrentRoom('house')
+
+        setTransitioning(false)
+
+      }, 1300)
+
+    }
+    const exitThrone = () => {
 
       setTransitioning(true)
 
@@ -3673,6 +3695,9 @@ function Scene() {
               onEnterSchool={
                 enterSchool
               }
+              onEnterThrone={
+                enterThrone
+              }
             />
 
           )
@@ -3705,6 +3730,7 @@ function Scene() {
           currentRoom === 'amethyst' && (
 
             <AmethystLibraryRoom
+              archiveOpen={amethystArchiveOpen}
               onExit={() => {
 
                 setTransitioning(true)
@@ -3717,6 +3743,16 @@ function Scene() {
 
                 }, 1300)
 
+              }}
+              onArchiveOpenChange={
+                setAmethystArchiveOpen
+              }
+              onFlashChange={
+                setAmethystFlash
+              }
+              onCloseArchive={() => {
+                setAmethystArchiveOpen(false)
+                setAmethystFlash(false)
               }}
             />
 
@@ -3751,8 +3787,720 @@ function Scene() {
 
           )
         }
+        {
+          currentRoom === 'throne' && (
+
+            <ThroneRoom
+              onExit={() => {
+
+                setTransitioning(true)
+
+                setTimeout(() => {
+
+                  setCurrentRoom(
+                    'house'
+                  )
+
+                }, 1300)
+
+                setTimeout(() => {
+
+                  setTransitioning(
+                    false
+                  )
+
+                }, 1900)
+
+              }}
+            />
+
+          )
+        }
 
       </Canvas>
+
+
+      {
+        currentRoom ===
+          'amethyst' &&
+        amethystFlash && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              width: '100vw',
+              height: '100vh',
+              background: '#B56CFF',
+              zIndex: 999998,
+              pointerEvents: 'none'
+            }}
+          />
+        )
+      }
+
+
+      {
+        currentRoom === 'amethyst' &&
+        amethystArchiveOpen && (
+
+          <div
+            className="amethyst-archive"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              width: '100vw',
+              height: '100vh',
+
+              backgroundImage:
+                "url('/archive-bg.png')",
+
+              backgroundSize:
+                '100% 100%',
+
+              backgroundPosition:
+                'center',
+
+              backgroundRepeat:
+                'no-repeat',
+
+              zIndex: 999999,
+              pointerEvents: 'auto',
+              overflow: 'hidden',
+            }}
+          >
+
+            
+            {/* ==================================================
+                    ARCHIVE CLOSE BUTTON
+                ================================================== */}
+
+                <button
+                  className="project-close"
+                  onClick={() => {
+                  setAmethystArchiveOpen(false)
+                  setAmethystFlash(false)
+
+                  camera.position.set(
+                    -6,
+                    8,
+                    4.35
+                  )
+
+                  camera.lookAt(
+                    1.25,
+                    1.5,
+                    0.15
+                  )
+                }}
+
+                  style={{
+                    position: 'absolute',
+
+                    top: '15%',
+                    right: '48.5%',
+
+                    width: '42px',
+                    height: '42px',
+
+                    borderRadius: '50%',
+
+                    border: '1px solid rgba(255,255,255,0.45)',
+
+                    background: 'rgba(15,10,20,0.72)',
+
+                    color: '#FFFFFF',
+
+                    fontSize: '25px',
+                    lineHeight: '1',
+
+                    cursor: 'pointer',
+
+                    zIndex: 20,
+
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+
+                    transition: 'all 0.2s ease',
+
+                    boxShadow: '0 0 15px rgba(0,0,0,0.45)',
+                  }}
+
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.transform = 'scale(1.1)'
+                    event.currentTarget.style.background =
+                      'rgba(168,85,247,0.55)'
+                  }}
+
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.transform = 'scale(1)'
+                    event.currentTarget.style.background =
+                      'rgba(15,10,20,0.72)'
+                  }}
+                >
+                  ×
+                </button>
+            {/* ==================================================
+                ARCHIVE TITLE
+            ================================================== */}
+
+            <div
+              className="archive-title"
+              style={{
+                position: 'absolute',
+                top: '2.5%',
+                left: '2%',
+                color: '#eadcff',
+                fontFamily: 'Georgia, serif',
+                pointerEvents: 'none',
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize:
+                    'clamp(18px, 1.8vw, 30px)',
+                  letterSpacing: '0.12em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                THE AMETHYST ARCHIVE
+              </div>
+
+              <div
+                style={{
+                  marginTop: '5px',
+                  fontSize:
+                    'clamp(7px, 0.7vw, 12px)',
+                  letterSpacing: '0.18em',
+                  opacity: 0.75,
+                }}
+              >
+                KNOWLEDGE LIVES FOREVER
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                PROFESSIONAL ARCHIVE
+            ================================================== */}
+
+            <div
+              style={{
+                position: 'absolute',
+                top: '15%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '40%',
+                textAlign: 'center',
+                fontFamily: 'Georgia, serif',
+                color: '#342032',
+                pointerEvents: 'none',
+              }}
+            >
+
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize:
+                    'clamp(12px, 1.45vw, 24px)',
+                  letterSpacing: '0.16em',
+                  fontWeight: '600',
+                }}
+              >
+           
+              </h2>
+
+            </div>
+
+
+            {/* ==================================================
+                ARCHIVE NAVIGATION
+            ================================================== */}
+
+            <div
+              className="archive-navigation"
+              style={{
+                position: 'absolute',
+                top: '17%',
+                left: '2%',
+                width: '13%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+
+              {[
+                '✦  ABOUT ME',
+                '⚙  SKILLS',
+                '✧  LEARNING',
+                '◆  EDUCATION',
+                '♜  ACHIEVEMENTS',
+                '⌘  CONNECT',
+              ].map((item) => (
+
+                <button
+                  key={item}
+                  style={{
+                    width: '100%',
+                    padding:
+                      'clamp(7px, 0.7vw, 13px) clamp(8px, 0.8vw, 14px)',
+
+                    background:
+                      'rgba(10, 5, 12, 0.72)',
+
+                    border:
+                      '1px solid rgba(211, 157, 255, 0.35)',
+
+                    color: '#eadcff',
+
+                    fontFamily:
+                      'Georgia, serif',
+
+                    fontSize:
+                      'clamp(8px, 0.9vw, 15px)',
+
+                    letterSpacing:
+                      '0.08em',
+
+                    textAlign:
+                      'left',
+
+                    cursor:
+                      'pointer',
+
+                    transition:
+                      'all 0.25s ease',
+
+                    touchAction:
+                      'manipulation',
+                  }}
+
+                  onMouseEnter={(e) => {
+
+                    e.currentTarget.style.background =
+                      'rgba(100, 45, 130, 0.65)'
+
+                    e.currentTarget.style.borderColor =
+                      'rgba(230, 180, 255, 0.8)'
+
+                  }}
+
+                  onMouseLeave={(e) => {
+
+                    e.currentTarget.style.background =
+                      'rgba(20, 8, 25, 0.72)'
+
+                    e.currentTarget.style.borderColor =
+                      'rgba(211, 157, 255, 0.35)'
+
+                  }}
+                >
+                  {item}
+                </button>
+
+              ))}
+
+            </div>
+
+
+            {/* ==================================================
+                ABOUT ME
+            ================================================== */}
+
+            <div
+              className="archive-section archive-about"
+              style={{
+                position: 'absolute',
+                left: '22%',
+                top: '18%',
+                width: '27%',
+                color: '#342032',
+                fontFamily: 'Georgia, serif',
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize:
+                    'clamp(13px, 1.2vw, 21px)',
+                  letterSpacing:
+                    '0.04em',
+                  fontWeight:
+                    '600',
+                }}
+              >
+                ✦ ABOUT ME
+              </div>
+
+              <div
+                style={{
+                  marginLeft: '5%',
+                  marginTop: '4px',
+                  fontSize:
+                    'clamp(9px, 0.85vw, 14px)',
+                  lineHeight:
+                    '1.35',
+                }}
+              >
+
+                <div
+                  style={{
+                    fontWeight: '600',
+                    marginBottom: '5px',
+                  }}
+                >
+                  Developer • Builder • Explorer
+                </div>
+
+                <div>
+                  I build creative digital experiences,
+                  explore new technology, <br/>and turn ideas
+                  into things people can actually experience.
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                SKILLS
+            ================================================== */}
+
+            <div
+              className="archive-section archive-skills"
+              style={{
+                position: 'absolute',
+                left: '56%',
+                top: '18%',
+                width: '25%',
+                color: '#342032',
+                fontFamily: 'Georgia, serif',
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize:
+                    'clamp(13px, 1.2vw, 21px)',
+                  letterSpacing:
+                    '0.04em',
+                  fontWeight:
+                    '600',
+                }}
+              >
+                ⚙ SKILLS
+              </div>
+
+              <div
+                style={{
+                  marginTop: '5px',
+                  fontSize:
+                    'clamp(8px, 0.72vw, 12px)',
+                  lineHeight:
+                    '1.45',
+                }}
+              >
+
+                <div>
+                  <strong>FULL-STACK</strong>
+                  <br />
+                  React • Node.js • Express • MongoDB
+                </div>
+
+                <div style={{ marginTop: '4px' }}>
+                  <strong>LANGUAGES</strong>
+                  <br />
+                  JavaScript • TypeScript • Python • C++ • SQL
+                </div>
+
+                <div style={{ marginTop: '4px' }}>
+                  <strong>CREATIVE WEB</strong>
+                  <br />
+                  Three.js • GSAP • Framer Motion
+                </div>
+
+                <div style={{ marginTop: '4px' }}>
+                  <strong>TOOLS</strong>
+                  <br />
+                  Git • GitHub • Docker • Postman
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                LEARNING
+            ================================================== */}
+
+            <div
+              className="archive-section archive-learning"
+              style={{
+                position: 'absolute',
+                left: '21%',
+                top: '41%',
+                width: '27%',
+                color: '#342032',
+                fontFamily: 'Georgia, serif',
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize:
+                    'clamp(13px, 1.2vw, 21px)',
+                  fontWeight:
+                    '600',
+                }}
+              >
+                ✧ LEARNING
+              </div>
+
+              <div
+                style={{
+                  marginLeft: '5%',
+                  marginTop: '6px',
+                  fontSize:
+                    'clamp(8px, 0.75vw, 13px)',
+                  lineHeight:
+                    '1.45',
+                }}
+              >
+
+                <strong>CURRENTLY EXPLORING</strong>
+
+                <div style={{ marginTop: '5px' }}>
+                  Full-stack development,
+                  creative web experiences,
+                  3D on the web, <br/>and new
+                  technologies.
+                </div>
+
+                <div
+                  style={{
+                    marginTop: '7px',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Always learning.
+                  Always building.
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                EDUCATION
+            ================================================== */}
+
+            <div
+              className="archive-section archive-education"
+              style={{
+                position: 'absolute',
+                left: '56%',
+                top: '41%',
+                width: '25%',
+                color: '#342032',
+                fontFamily: 'Georgia, serif',
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize:
+                    'clamp(13px, 1.2vw, 21px)',
+                  fontWeight:
+                    '600',
+                }}
+              >
+                ◆ EDUCATION
+              </div>
+
+              <div
+                style={{
+                  marginTop: '5px',
+                  fontSize:
+                    'clamp(8px, 0.75vw, 13px)',
+                  lineHeight:
+                    '1.4',
+                }}
+              >
+
+                <strong>
+                  CHANDIGARH UNIVERSITY
+                </strong>
+
+                <div>
+                  B.Tech — Computer Science
+                  & Engineering
+                </div>
+
+                <div style={{ marginTop: '3px' }}>
+                  Expected Graduation: 2028
+                </div>
+
+                <div>
+                  5th Semester • CGPA: 7.83 / 10
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                ACHIEVEMENTS
+            ================================================== */}
+
+            <div
+              className="archive-section archive-achievements"
+              style={{
+                position: 'absolute',
+                left: '20%',
+                top: '64%',
+                width: '28%',
+                color: '#342032',
+                fontFamily: 'Georgia, serif',
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize:
+                    'clamp(13px, 1.2vw, 21px)',
+                  fontWeight:
+                    '600',
+                }}
+              >
+                ♜ ACHIEVEMENTS
+              </div>
+
+              <div
+                style={{
+                  marginTop: '5px',
+                  marginLeft: '5%',
+                  fontSize:
+                    'clamp(8px, 0.72vw, 12px)',
+                  lineHeight:
+                    '1.45',
+                }}
+              >
+
+                
+
+                <div>
+                  <strong>2nd Place</strong> — School Chess
+                </div>
+
+                <div>
+                  <strong>Hachshastra 2.0 — 2026</strong>
+                  <br />
+                  Team Leader & Developer
+                </div>
+
+                <div>
+                  College Hackathons & Technical Events
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                    CONNECT
+                ================================================== */}
+
+                <div
+                  className="archive-section archive-connect"
+                  style={{
+                    position: 'absolute',
+                    left: '56%',
+                    top: '62%',
+                    width: '25%',
+                    color: '#342032',
+                    fontFamily: 'Georgia, serif',
+                  }}
+                >
+
+                  <div
+                    style={{
+                      fontSize:
+                        'clamp(13px, 1.2vw, 21px)',
+                      fontWeight: '600',
+                    }}
+                  >
+                    ⌘ CONNECT
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      fontSize:
+                        'clamp(8px, 0.72vw, 12px)',
+                      lineHeight: '1.5',
+                    }}
+                  >
+
+                    <div>
+                      Have an idea?
+                      <br />
+                      Want to build something?
+                    </div>
+
+
+                    
+
+                    {/* LINKEDIN */}
+
+                    <a
+                      href="https://www.linkedin.com/in/sagar-chhetri-938a7431b/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'block',
+                        marginTop: '4px',
+                        color: '#342032',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✦ LinkedIn
+                    </a>
+
+
+                    {/* EMAIL */}
+
+                    <a
+                      href="mailto:smgsagar087@gmail.com"
+                      style={{
+                        display: 'block',
+                        marginTop: '4px',
+                        color: '#342032',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✉ Email
+                    </a>
+
+
+                  </div>
+
+                </div>
+
+          </div>
+        )
+      }
 
 
       {
@@ -4128,6 +4876,115 @@ function Scene() {
 
                 </button>
               )}
+              {/* ==================================================
+                  SCHOOL ROOM EXIT
+              ================================================== */}
+
+              {currentRoom === 'throne' && (
+                <button
+                  onClick={() => {
+
+                    setTransitioning(true)
+
+                    setTimeout(() => {
+
+                      setCurrentRoom('house')
+
+                      setTransitioning(false)
+
+                    }, 1300)
+
+                  }}
+
+                  style={{
+                    position: 'absolute',
+                    top: '24px',
+                    left: '24px',
+                    zIndex: 50,
+
+                    padding: '10px 16px',
+
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+
+                    background:
+                      'rgba(8, 6, 12, 0.72)',
+
+                    border:
+                      '1px solid rgba(216, 178, 104, 0.55)',
+
+                    color:
+                      '#E8D6B0',
+
+                    fontFamily:
+                      'Arial, Helvetica, sans-serif',
+
+                    fontSize:
+                      '11px',
+
+                    fontWeight:
+                      '600',
+
+                    letterSpacing:
+                      '2px',
+
+                    cursor:
+                      'pointer',
+
+                    backdropFilter:
+                      'blur(6px)',
+
+                    boxShadow:
+                      '0 0 15px rgba(0,0,0,0.35)',
+
+                    transition:
+                      'all 0.25s ease',
+                  }}
+
+                  onMouseEnter={(event) => {
+
+                    event.currentTarget.style.background =
+                      'rgba(55, 30, 75, 0.85)'
+
+                    event.currentTarget.style.borderColor =
+                      'rgba(216, 178, 104, 0.9)'
+
+                    event.currentTarget.style.boxShadow =
+                      '0 0 20px rgba(168,85,247,0.3)'
+
+                  }}
+
+                  onMouseLeave={(event) => {
+
+                    event.currentTarget.style.background =
+                      'rgba(8, 6, 12, 0.72)'
+
+                    event.currentTarget.style.borderColor =
+                      'rgba(216, 178, 104, 0.55)'
+
+                    event.currentTarget.style.boxShadow =
+                      '0 0 15px rgba(0,0,0,0.35)'
+
+                  }}
+                >
+
+                  <span
+                    style={{
+                      fontSize: '16px',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ←
+                  </span>
+
+                  <span>
+                    EXIT THRONE
+                  </span>
+
+                </button>
+              )}
+              
 
 
       <div

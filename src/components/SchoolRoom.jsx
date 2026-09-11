@@ -374,7 +374,7 @@ function SchoolRoom({
       )
 
     const rotationLimit =
-      0.15
+      0.20
 
 
     const handleChange = () => {
